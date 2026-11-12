@@ -16,13 +16,16 @@ st.warning("⚠️ **Disclaimer:** This is an educational machine learning proje
 @st.cache_data(ttl=3600) # Refreshes data every hour
 def load_data():
     # Pull 5 years of live data from Yahoo Finance
-    df = yf.download("AAPL", period="5y", progress=False)
+    # multi_level_index=False prevents the MultiIndex column issue entirely
+    df = yf.download("AAPL", period="5y", progress=False, multi_level_index=False)
+    
+    # Fallback flattening just in case
     if isinstance(df.columns, pd.MultiIndex):
         df.columns = df.columns.get_level_values(0)
     
     ts = df['Close'].dropna()
     
-    # THE FIX IS HERE: Force the index to be 'Business Days' and fill any gaps
+    # Force the index to be 'Business Days' and fill any gaps
     ts = ts.asfreq('B').ffill()
     
     return ts
@@ -42,7 +45,6 @@ with st.spinner("Fetching live data and training ARIMA model..."):
     ts = load_data()
     log_ts = np.log(ts)
     
-    # Using a fixed order for speed in the web app. 
     order = (2, 1, 2) 
     fit = train_model(log_ts, order)
 
@@ -51,7 +53,9 @@ fc = fit.get_forecast(horizon)
 future_idx = pd.bdate_range(ts.index[-1] + pd.Timedelta(days=1), periods=horizon)
 
 forecast_mean = np.exp(fc.predicted_mean.values)
-conf_int = np.exp(fc.conf_int(alpha=0.05))
+
+# CRITICAL FIX: Convert the confidence interval DataFrame to a numpy array
+conf_int = np.exp(fc.conf_int(alpha=0.05).values)
 
 # 5. Plotting with Plotly
 fig = go.Figure()
@@ -62,7 +66,7 @@ fig.add_trace(go.Scatter(x=ts.index[-250:], y=ts.iloc[-250:], name="Actual Price
 # Plot Forecast
 fig.add_trace(go.Scatter(x=future_idx, y=forecast_mean, name="Forecast", line=dict(color="crimson")))
 
-# Plot Confidence Interval
+# Plot Confidence Interval (using array slicing)
 fig.add_trace(go.Scatter(x=future_idx, y=conf_int[:, 1], fill=None, mode='lines', line_color='rgba(255,0,0,0)', showlegend=False))
 fig.add_trace(go.Scatter(x=future_idx, y=conf_int[:, 0], fill='tonexty', mode='lines', line_color='rgba(255,0,0,0)', fillcolor='rgba(255,0,0,0.15)', name='95% Confidence Interval'))
 
