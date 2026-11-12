@@ -1,5 +1,4 @@
-        "present in the GitHub repository beside app.py."
-    )
+
     st.stop()
 
 
