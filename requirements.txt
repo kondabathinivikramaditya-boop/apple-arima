@@ -5,3 +5,4 @@ seaborn
 statsmodels
 jupyterlab
 nbformat
+scikit-learn
