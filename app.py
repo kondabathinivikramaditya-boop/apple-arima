@@ -146,7 +146,7 @@ forecast_df = pd.DataFrame(
     index=future_idx
 ).round(2)
 
-st.dataframe(forecast_df, use_container_width=True)
+st.code(forecast_df.to_string(), language=None)
 
 st.caption(
     "Source: Yahoo Finance | Model: ARIMA(2,1,2) | "
