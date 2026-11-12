@@ -1,8 +1,6 @@
+streamlit
+yfinance
+statsmodels
+plotly
 pandas
 numpy
-matplotlib
-seaborn
-statsmodels
-jupyterlab
-nbformat
-scikit-learn
